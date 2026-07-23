@@ -1,0 +1,468 @@
+/* ============================================================
+   nback — app-specific styles, loaded after the shared
+   common/assets/style.css. Page ground, type, the .content
+   column and footer all come from the shared sheet; this file
+   styles the game UI and bridges the app's legacy tokens onto
+   the common palette.
+   ============================================================ */
+
+/* ── Token bridge ────────────────────────────────────────────
+   The game CSS below is keyed on the app's original
+   solarized/fixf variable names. Redefine them in terms of the
+   common palette so the game inherits the studio colours with
+   no rule-by-rule rewrite. (Candidate for later inlining.) */
+:root {
+  --fixf-background:  var(--bg-page);
+  --fixf-darkblue:    var(--accent-blue);
+  --solarized-yellow: var(--accent-yellow);
+  --solarized-orange: var(--accent-red);
+  --solarized-blue:   var(--accent-blue);
+  --solarized-base2:  var(--bg-beige);
+  --solarized-base03: var(--fg-brown-dk);
+  --solarized-base02: var(--fg-black);
+  --solarized-base0:  var(--border-table);
+}
+
+/* Headings adopt the shared sheet — no local font/colour override. */
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 0.4rem;
+  padding-bottom: 1em;
+}
+
+.title-row h1 {
+  margin-bottom: 0;
+}
+
+.title-icon {
+  height: 2rem;
+  width: auto;
+}
+
+/* Sticky footer: nback's landing/game/settings/help screens are often
+   shorter than the viewport, leaving the shared sheet's footer stranded
+   right below the content instead of at the page bottom. Scoped here
+   (rather than in common/assets/style.css) since that sheet is shared
+   verbatim by every studio site — this pins it for nback only. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* The shared sheet centers .content/footer with max-width + margin: 0 auto
+   — a block-layout trick that fills available width, then caps it. Flex's
+   cross-axis stretch (which would otherwise do the same job) is disabled
+   by spec for any item that already has auto cross-axis margins, so these
+   items would shrink to their content's width instead. Restate an explicit
+   full width so the max-width/margin centering still has something to cap. */
+body > div.content {
+  width: 100%;
+}
+
+footer {
+  width: 100%;
+  margin-top: auto; /* pins it to the bottom of the min-height: 100vh body */
+}
+
+
+/* For mobile devices */
+@media (max-width: 1000px) {
+  .modal-container {
+    padding: 0.5em;
+    margin: 0.5em;
+  }
+
+  .close-button {
+    font-size: 1.75em;
+  }
+
+  button {
+    font-size: 0.7em;
+  }
+
+  /* Size cells to the viewport (vmin) so the 3×3 board always fits the
+     screen width and stays square. A fixed em size overflowed narrow
+     phones; the table then compressed horizontally and cells rendered
+     shorter than they were tall. Sizing to fit keeps them square and
+     shrinks the board so it's no longer taller than the screen. */
+  .game-grid-cell,
+  .game-grid-cell-empty {
+    font-size: 16vmin;
+  }
+
+  /* The chart svg has no width/height attributes, so its box is normally
+     auto-sized from the 350:75 viewBox ratio against whatever width it's
+     given — on a narrow phone that ratio squeezes the height (and with it,
+     the x-axis label's headroom) down to almost nothing.
+     A fixed px height fought the container width and either overflowed it
+     (height set, width left to compute from the *ratio* instead of the
+     container) or squished everything horizontally (height too tall for
+     the actual container width, and preserveAspectRatio "none" stretches
+     width/height independently to fill it). aspect-ratio keeps width
+     driven by the container while relaxing the ratio only a little.
+     .stats-aside has no height of its own — it sizes to its content (the
+     caption + this chart) — so growing the chart is what grows the aside;
+     110 (vs. the original 75) is about 10% taller than the previous 100. */
+  .chart {
+    width: 100%;
+    aspect-ratio: 350 / 110;
+  }
+}
+
+/* For larger screens */
+@media (min-width: 1001px) {
+  .modal-container {
+    padding: 1em;
+    margin: 1em;
+    width: 90%;
+    margin-top: 2em;
+  }
+
+  .close-button {
+    font-size: 1.25em;
+  }
+
+  button {
+    font-size: 0.8em;
+  }
+
+  .game-grid-cell,
+  .game-grid-cell-empty {
+    font-size: 5.2em;
+  }
+}
+
+/* Play/Settings/Help as icon "badges" instead of text buttons — plain,
+   borderless, sized for the SVG rather than the uppercase-text chrome
+   below. */
+.menu-icon-button {
+  background: none;
+  border: 0;
+  color: var(--fg-black);
+  margin: 0.5em;
+  min-width: auto;
+  opacity: 0.7;
+  padding: 0.25em;
+}
+
+.menu-icon-button:hover {
+  opacity: 1;
+}
+
+.menu-icon {
+  width: 2.4em;
+  height: 2.4em;
+  vertical-align: middle;
+}
+
+button,
+.eg-button {
+  background-color: var(--solarized-base2);
+  border: 1px solid var(--solarized-yellow);
+  border-radius: 5px;
+  color: var(--solarized-base03);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 0.8em;
+  margin: 0.5em;
+  min-width: 5em;
+  padding: 0.75em;
+  text-transform: uppercase;
+}
+
+button[disabled=true],
+button[disabled="disabled"] {
+}
+
+.caption {
+  color: var(--solarized-base03);
+  font-size: 0.8em;
+  font-weight: bold;
+  margin-top: 0.5em;
+  text-align: center;
+}
+
+p {
+  line-height: 1.75em;
+}
+
+.cfg-container {
+  margin-bottom: 1em;
+  line-height: 1.5em;
+}
+
+.cfg-input {
+  padding-left: 1em;
+  text-align: left;
+}
+
+/* Numeric stepper — replaces <input type="number">, whose spinner arrows
+   never render on mobile Safari and which forces a select-then-type edit.
+   Big, keyboard-free tap targets that behave the same on desktop. */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+/* Plain +/− glyphs, no button chrome — the box read too heavy against the
+   studio's light palette. Generous invisible tap target is kept via min-size. */
+.step-btn {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--solarized-yellow);
+  cursor: pointer;
+  font-size: 1em;
+  min-width: 1.6em;
+  min-height: 1em;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-btn:hover {
+  color: var(--solarized-orange);
+}
+
+.step-btn:disabled {
+  color: var(--solarized-base0);
+  cursor: default;
+}
+
+.step-value {
+  min-width: 3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1em;
+  color: var(--solarized-base03);
+}
+
+.cfg-label {
+  text-align: left;
+}
+
+.cfg-table {
+  margin-bottom: 2em;
+  margin-top: 1em;
+}
+
+.close-button {
+  background-color: var(--fixf-background);
+  border: 0;
+  color: var(--solarized-yellow);
+  margin: 0;
+  min-width: 1em;
+  padding: 0;
+}
+
+/* Refresh / close icons — sized in em so both render at identical size. */
+.btn-icon {
+  vertical-align: middle;
+}
+
+.eg-button {
+  cursor: text;
+  margin: 0em;
+  padding-bottom: 0.25em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  padding-top: 0.5em;
+  vertical-align: baseline;
+}
+
+.modal-body {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Screen titles (Settings, Help): left-aligned rather than centered by
+   .modal-body's flex alignment. */
+.modal-title {
+  align-self: flex-start;
+}
+
+/* Settings: the config table and reset button read better left-aligned
+   rather than centered by .modal-body's default. */
+.settings-body {
+  align-items: flex-start;
+}
+
+/* Help copy: unlike stats/grid/config, prose reads better left-aligned and
+   full-width rather than squeezed to content-width by .modal-body's centering. */
+.help-body .prose {
+  align-self: stretch;
+  text-align: left;
+}
+
+.modal-container {
+  border: 1px solid var(--solarized-yellow);
+  border-radius: 5px;
+  text-align: center;
+}
+
+.game-grid {
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-bottom: 3em;
+  margin-top: 2em;
+}
+
+.game-grid-cell,
+.game-grid-cell-empty {
+  border: 1px solid var(--solarized-blue);
+  font-family: 'PT Mono', 'Courier New', Courier, monospace;
+  width: 1.5em;
+  height: 1.5em;
+  padding: 0;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Fade in opacity for game grid cells */
+.game-grid-cell {
+  transition: color 0.5s ease-in;
+}
+
+.game-grid-cell-empty {
+  color: var(--fixf-background);
+}
+
+.modal-header {
+  border: 0;
+  padding: 0;
+  text-align: right;
+}
+
+.game-over-title {
+  color: var(--solarized-orange);
+  font-size: 3.5em;
+  font-weight: bolder;
+  padding: 1em;
+  text-align: center;
+}
+
+.game-over-score {
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.game-stats-name {
+  font-weight: bold;
+  min-width: 5em;
+  padding-right: 2em;
+  padding-left: 1em;
+}
+
+.game-stats-value {
+  min-width: 5em;
+  text-align: left;
+}
+
+.subtitle {
+  color: var(--solarized-base03);
+  font-size: 0.9em;
+  margin-top: -0.75em;
+}
+
+.menu-container {
+  /* Align with the top-level heading (no side indent); extra space above. */
+  margin: 2.5em 0 2em;
+}
+
+/* Statistics shown in a shared-style .aside panel (from common/style.css),
+   but full-width and left-aligned to fit the menu column. */
+.stats-aside {
+  margin-left: 0;
+  max-width: 80%;
+}
+
+.description {
+  text-align: justify;
+}
+
+
+.chart {
+  .axis.left {
+    .title {
+      transform: rotate(270deg);
+    }
+  }
+
+  .axis.right {
+    .title {
+      transform: rotate(90deg);
+    }
+  }
+}
+
+
+.chart {
+  max-width: 1332px;
+  overflow: visible;
+
+  /* Each Axis renders its own nested <svg> (yew_chart's axis.rs), and it
+     also auto-scales its font-size at runtime to keep axis text a roughly
+     constant real-pixel size regardless of the chart's own CSS size — on a
+     narrow phone that pushes the (dynamically larger, in viewBox units)
+     x-axis title past the bottom edge of its own nested svg's box, and
+     nested svgs clip to that box by default. overflow: visible here lets
+     it render past that box instead of being cut off. */
+  .axis {
+    overflow: visible;
+
+    .title {
+      color: var(--solarized-base03);
+      fill: currentColor;
+      font-size: 0.75em;
+      padding: 0.25em;
+    }
+
+    .text {
+      fill: var(--solarized-base03);
+      font-size: 0.75em;
+    }
+
+    .line {
+      stroke: var(--solarized-base0);
+    }
+
+    .tick {
+      stroke: var(--solarized-base0);
+    }
+  }
+
+  .x-axis {
+    .text {
+      text-anchor: start;
+      transform: rotate(45deg);
+    }
+
+    .title {
+      transform: translatey(2em);
+    }
+  }
+
+  .series.series {
+    stroke: var(--solarized-orange);
+    stroke-width: 2px;
+
+    text {
+      stroke: none;
+      stroke-width: 1px;
+    }
+  }
+
+  .series.bar-chart {
+    stroke-width: 30px;
+  }
+}

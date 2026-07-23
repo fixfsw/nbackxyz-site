@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>goldfish n-back</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <script>(function(){try{var t=JSON.parse(localStorage.getItem('THEME')||'null');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();</script>
+  <meta name="description" content="n-back —  dual n-back working memory trainer">
+  <meta name="robots" content="index, follow">
+
+  <link rel="canonical" href="https://nback.xyz/">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+
+  <!-- Shared studio chrome + app-specific overrides — both plain assets at the root. -->
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/nback.css">
+
+  <script data-goatcounter="https://fixf.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+<link rel="modulepreload" href="/nback-7bae20a2ee71b98.js" crossorigin="anonymous" integrity="sha384-qyHGpsFMiCByRrh2lCrKn+zbBtU78gw3gmXbfQGmEzbua8SQpFRNJCDCYaxVdz2F"><link rel="preload" href="/nback-7bae20a2ee71b98_bg.wasm" crossorigin="anonymous" integrity="sha384-C4Tt14wRYZaMugerEmJskNRyM8AYz3DNWHnGZ3h53jRW/IYPthMaIHIrMIizXtmY" as="fetch" type="application/wasm"></head>
+
+<body>
+
+  <div class="content">
+    <div id="id-app-container" class="app-container">
+      <div id="id-app"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>fix𝑓 © 2026</p>
+  </footer>
+
+
+<script type="module">
+import init, * as bindings from '/nback-7bae20a2ee71b98.js';
+const wasm = await init({ module_or_path: '/nback-7bae20a2ee71b98_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+
+</html>
