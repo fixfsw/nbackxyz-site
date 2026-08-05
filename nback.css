@@ -1,0 +1,735 @@
+/* ============================================================
+   nback — app-specific styles, loaded after the shared
+   common/assets/style.css. Page ground, type, the .content
+   column and footer all come from the shared sheet; this file
+   styles the game UI and bridges the app's legacy tokens onto
+   the common palette.
+   ============================================================ */
+
+/* ── Token bridge ────────────────────────────────────────────
+   The game CSS below is keyed on the app's original
+   solarized/fixf variable names. Redefine them in terms of the
+   common palette so the game inherits the studio colours with
+   no rule-by-rule rewrite. (Candidate for later inlining.) */
+:root {
+  --fixf-background:  var(--bg-page);
+  --fixf-darkblue:    var(--accent-blue);
+  --solarized-yellow: var(--accent-yellow);
+  --solarized-orange: var(--accent-red);
+  --solarized-blue:   var(--accent-blue);
+  --solarized-base2:  var(--bg-beige);
+  --solarized-base03: var(--fg-brown-dk);
+  --solarized-base02: var(--fg-black);
+  --solarized-base0:  var(--border-table);
+
+  /* Border for the blue stat cards (main/game stat rows) — matches the
+     Swift app's UXTheme.borderCardBlue exactly. Not part of the shared
+     palette (common/assets/style.css) since only nback uses it so far. */
+  --border-card-blue: #8fb3d4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root { --border-card-blue: #3a5570; }
+}
+:root[data-theme="dark"]  { --border-card-blue: #3a5570; }
+:root[data-theme="light"] { --border-card-blue: #8fb3d4; }
+
+/* ── Cards ────────────────────────────────────────────────
+   Shared card primitive — the CSS analog of the Swift app's
+   `View.card(fill:border:)` modifier (UXTheme.swift). Used to group the
+   main view's toolbar and stat row, the settings card, and the game view's
+   stat row, instead of one-off styling per screen. */
+.card {
+  background-color: var(--bg-section);
+  border: 1px solid var(--border-main);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* Blue variant for stat rows (main view's n/last-score, game view's
+   n/round/score) — matches Swift's bgCardBlue/borderCardBlue. */
+.card-blue {
+  background-color: var(--bg-rotd);
+  border-color: var(--border-card-blue);
+}
+
+/* A horizontal row of name-over-value tiles inside a .card/.card-blue —
+   the CSS analog of Swift's private `statTile`/`stat` helpers. */
+.stat-row {
+  display: flex;
+  gap: 2rem;
+}
+
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-tile-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--fg-brown);
+}
+
+.stat-tile-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Fixed-width value column (see stat_tile::stat_tile_fixed): the ghost
+   reserves the widest possible string's width via visibility: hidden
+   (unlike display: none, it still takes up layout space), and the actual
+   value is absolutely positioned on top of it — the CSS analog of Swift's
+   `.hidden().overlay{}` trick. Used by the game view's 𝑛/round/score row so
+   its width doesn't jitter as the digits change over a game. */
+.stat-tile-value-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.stat-tile-value-ghost {
+  visibility: hidden;
+}
+
+.stat-tile-value-actual {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Headings adopt the shared sheet — no local font/colour override. */
+
+.title-row {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 0.4rem;
+  padding-bottom: 1em;
+}
+
+.title-row h1 {
+  margin-bottom: 0;
+  text-transform: none;
+}
+
+.title-icon {
+  height: 2rem;
+  width: auto;
+}
+
+/* Title + subtitle stacked next to the logo, matching the Swift app's
+   header VStack(alignment: .leading). Static chrome (see index.html) above
+   the app card, rather than rendered by the Yew app — it never changes
+   across screens, so it doesn't need to. */
+.title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* The bordered "window" the game mounts into — a .card look, but with the
+   page's own background (rather than the slightly-warmer section tint)
+   since this is the page's main focal point, not a subsection of it.
+   Height is fixed to comfortably fit the idle main view (toolbar + stat
+   row + history chart); Settings/Help/the game board fit within the same
+   budget (see .game-grid-cell's reduced size) so switching screens never
+   shifts the description text below. overflow-y is a safety net in case
+   any screen's content runs slightly taller than expected. */
+.app-container {
+  background-color: var(--bg-page);
+  border: 1px solid var(--border-main);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  height: 34rem;
+  overflow-y: auto;
+}
+
+/* Settings/Help's in-app second-level header — no logo (that's part of the
+   static title-row above), sits right under the back button. */
+.screen-title {
+  margin-top: 0.5em;
+}
+
+/* Sticky footer: nback's landing/game/settings/help screens are often
+   shorter than the viewport, leaving the shared sheet's footer stranded
+   right below the content instead of at the page bottom. Scoped here
+   (rather than in common/assets/style.css) since that sheet is shared
+   verbatim by every studio site — this pins it for nback only. */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* The shared sheet centers .content/footer with max-width + margin: 0 auto
+   — a block-layout trick that fills available width, then caps it. Flex's
+   cross-axis stretch (which would otherwise do the same job) is disabled
+   by spec for any item that already has auto cross-axis margins, so these
+   items would shrink to their content's width instead. Restate an explicit
+   full width so the max-width/margin centering still has something to cap. */
+body > div.content {
+  width: 100%;
+}
+
+footer {
+  width: 100%;
+  margin-top: auto; /* pins it to the bottom of the min-height: 100vh body */
+}
+
+
+/* For mobile devices */
+@media (max-width: 1000px) {
+  button {
+    font-size: 0.7em;
+  }
+
+  /* Size cells to the viewport (vmin) so the 3×3 board always fits the
+     screen width and stays square. A fixed em size overflowed narrow
+     phones; the table then compressed horizontally and cells rendered
+     shorter than they were tall. Sizing to fit keeps them square and
+     shrinks the board so it's no longer taller than the screen.
+     vmin alone was tuned against actual phone widths (~375px → a ~60px
+     cell) — fine as long as the narrower dimension stays phone-sized. On a
+     portrait tablet (e.g. an iPad at 820×1180) this branch still applies
+     (width ≤ 1000px), but vmin now tracks the width, not a phone's, so
+     cells ballooned to ~197px and blew well past the fixed-height
+     .app-container, forcing scrolling to reach the board's bottom rows.
+     Capping at the desktop rule's 3.8em keeps phones exactly as before
+     (16vmin stays under the cap at phone widths) while stopping cell
+     growth at the same safe size the ≥1001px branch already relies on. */
+  .game-grid-cell,
+  .game-grid-cell-empty {
+    font-size: min(16vmin, 3.8em);
+  }
+
+  /* The chart svg has no width/height attributes, so its box is normally
+     auto-sized from the 350:100 viewBox ratio against whatever width it's
+     given. A fixed px height fought the container width and either
+     overflowed it (height set, width left to compute from the *ratio*
+     instead of the container) or squished everything horizontally (height
+     too tall for the actual container width, and preserveAspectRatio
+     "none" stretches width/height independently to fill it). aspect-ratio
+     keeps width driven by the container while relaxing the ratio a
+     little — 110 (vs. the native 100) gives the right-side 𝑛 labels and
+     the bottom caption a touch more headroom on narrow phones. */
+  .chart {
+    width: 100%;
+    aspect-ratio: 350 / 110;
+  }
+}
+
+/* For larger screens */
+@media (min-width: 1001px) {
+  button {
+    font-size: 0.8em;
+  }
+
+  /* Sized to fit the fixed-height .app-container alongside the stats card
+     and controls (see .app-container) — smaller than the original 5.2em so
+     the game screen's total height stays within the same budget as the
+     idle main view. */
+  .game-grid-cell,
+  .game-grid-cell-empty {
+    font-size: 3.8em;
+  }
+}
+
+/* Landscape iPads and un-maximized/short desktop windows: wide enough for
+   the min-width:1001px rule above, but not tall enough to also fit the
+   static header above .app-container. That branch sizes cells off width
+   alone (3.8em, fine once the window is tall too), so on a wide-but-short
+   viewport the header + fixed-height .app-container together exceed the
+   viewport height, pushing the match buttons below the fold and forcing a
+   page-level scroll mid-round. min-width here keeps phones (already
+   handled by the vmin rule above, which accounts for height too) out of
+   this bucket. Cells scale off vh — same trick as that rule, just against
+   the dimension that's actually constrained here — and .app-container
+   shrinks to match so its content doesn't overflow into its own
+   overflow-y scrollbar instead. */
+@media (min-width: 1001px) and (max-height: 750px) {
+  .app-container {
+    /* 9.5rem ≈ the static header's height above .app-container, plus a
+       little breathing room, so the container's bottom edge stays inside
+       the viewport instead of merely inside its own scroll area. */
+    height: min(34rem, calc(100dvh - 9.5rem));
+  }
+
+  .game-grid-cell,
+  .game-grid-cell-empty {
+    font-size: 7vh;
+  }
+}
+
+/* ── App page: screenshot spread + download card ─────────────
+   Same layout language as the studio's other app pages
+   (tamarillo.nz's tamarillo.css) — kept here rather than in the
+   shared sheet since only nback and tamarillo currently use it. */
+.screenshots {
+  max-width: 1100px;
+  margin: var(--space-sm) auto var(--space-lg);
+  padding: 0 4%;
+}
+
+.screenshots-track {
+  display: flex;
+  gap: 1.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0.25rem 0.25rem 0.75rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.screenshots-track figure {
+  flex: 0 0 auto;
+  width: min(80vw, 420px);
+  scroll-snap-align: center;
+}
+
+.screenshots-track img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border-main);
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.4);
+}
+
+.screenshots-track figcaption {
+  margin-top: 0.7rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--fg-brown-lt);
+}
+
+/* ── Screenshot lightbox — click a thumbnail to view it enlarged,
+   sized by lightbox.js to about the width of .screenshots-track. */
+.screenshot-trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.screenshot-trigger:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 4px;
+  border-radius: 0.9rem;
+}
+
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: rgba(0, 0, 0, 0.85);
+  cursor: zoom-out;
+}
+
+.lightbox-image {
+  display: block;
+  height: auto;
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 0.9rem;
+  border: 1px solid var(--border-main);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.6);
+  cursor: zoom-out;
+}
+
+body.lightbox-open {
+  overflow: hidden;
+}
+
+.download-cta {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+/* Homepage's pair of "Play in your browser" / "Download for macOS" cards —
+   same .download-card primitive as the single Mac download CTA above, laid
+   out side by side and wrapping to a single column on narrow screens. */
+.landing-cards {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: var(--space-lg);
+}
+
+.app-card,
+.download-card {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 0.9rem 1.6rem 0.9rem 0.9rem;
+  border-radius: 1.4rem;
+  background-color: var(--bg-section);
+  border: 1px solid var(--border-main);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-card {
+  width: 15em;
+}
+
+.app-card:hover,
+.app-card:focus-visible,
+.download-card:hover,
+.download-card:focus-visible {
+  text-decoration: none;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.4);
+}
+
+.app-icon {
+  flex: none;
+  width: 4.5rem;
+  height: 4.5rem;
+  object-fit: contain;
+  border-radius: 24%;
+  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-cta {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: var(--space-lg);
+}
+
+.app-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.app-badge:hover .app-icon,
+.app-badge:focus-visible .app-icon {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.4);
+}
+
+.app-badge-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: var(--accent-blue);
+}
+
+.download-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.app-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--fg-brown-dk);
+}
+
+.app-label,
+.download-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent-blue);
+}
+
+@media (max-width: 640px) {
+  .app-card,
+  .download-card {
+    padding: 0.8rem 1.1rem 0.8rem 0.8rem;
+    gap: 0.85rem;
+  }
+
+  .app-icon {
+    width: 3.75rem;
+    height: 3.75rem;
+  }
+}
+
+/* Play/Settings/Help as icon "badges" instead of text buttons — plain,
+   borderless, sized for the SVG rather than the uppercase-text chrome
+   below. */
+.menu-icon-button {
+  background: none;
+  border: 0;
+  color: var(--fg-black);
+  margin: 0.5em;
+  min-width: auto;
+  opacity: 0.7;
+  padding: 0.25em;
+}
+
+.menu-icon-button:hover {
+  opacity: 1;
+}
+
+.menu-icon {
+  width: 2.4em;
+  height: 2.4em;
+  vertical-align: middle;
+}
+
+button,
+.eg-button {
+  background-color: var(--solarized-base2);
+  border: 1px solid var(--solarized-yellow);
+  border-radius: 5px;
+  color: var(--solarized-base03);
+  cursor: pointer;
+  font-family: var(--font-main);
+  font-size: 0.8em;
+  margin: 0.5em;
+  min-width: 5em;
+  padding: 0.5em;
+  text-transform: uppercase;
+}
+
+button[disabled=true],
+button[disabled="disabled"] {
+}
+
+.caption {
+  color: var(--solarized-base03);
+  font-size: 0.8em;
+  font-weight: bold;
+  margin-top: 0.5em;
+  text-align: center;
+}
+
+p {
+  line-height: 1.75em;
+}
+
+.cfg-input {
+  padding-left: 1em;
+  text-align: left;
+}
+
+/* Numeric stepper — replaces <input type="number">, whose spinner arrows
+   never render on mobile Safari and which forces a select-then-type edit.
+   Big, keyboard-free tap targets that behave the same on desktop. */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+/* Plain +/− glyphs, no button chrome — the box read too heavy against the
+   studio's light palette. Generous invisible tap target is kept via min-size. */
+.step-btn {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  color: var(--solarized-yellow);
+  cursor: pointer;
+  font-size: 1em;
+  min-width: 1.6em;
+  min-height: 1em;
+  margin: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-btn:hover {
+  color: var(--solarized-orange);
+}
+
+.step-btn:disabled {
+  color: var(--solarized-base0);
+  cursor: default;
+}
+
+.step-value {
+  min-width: 3em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1em;
+  color: var(--solarized-base03);
+}
+
+.cfg-label {
+  text-align: left;
+}
+
+.cfg-table {
+  margin-bottom: 2em;
+  margin-top: 1em;
+}
+
+/* Centers the settings .card on the page, matching the Swift app's
+   centered SettingsView. */
+.settings-container {
+  display: flex;
+  justify-content: center;
+  margin: 2.5em 0;
+}
+
+/* Chrome-free uppercase text button — matches the Swift app's
+   BauhausPlainTextButtonStyle (Settings' RESET/SAVE). Higher specificity
+   than the generic `button` rule below, so it overrides its fill/border. */
+.text-button {
+  background: none;
+  border: 0;
+  color: var(--fg-brown-dk);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  min-width: auto;
+  opacity: 0.85;
+  padding: 0.5em;
+  text-transform: uppercase;
+}
+
+.text-button:hover {
+  opacity: 1;
+}
+
+.eg-button {
+  cursor: text;
+  margin: 0em;
+  padding-bottom: 0.25em;
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+  padding-top: 0.5em;
+  vertical-align: baseline;
+}
+
+/* Center the stat card, grid, and controls as a column — matches the Swift
+   app's GameBoardView, whose VStack has no leading alignment override (the
+   default is centered), unlike the main view's leading-aligned toolbar. */
+.game-ui {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-grid {
+  border-collapse: collapse;
+  border-spacing: 0;
+  /* Tighter than the original 2em/3em — trimmed to help the game screen
+     fit .app-container's fixed height alongside the smaller grid cells. */
+  margin-bottom: 1.5em;
+  margin-top: 1.25em;
+}
+
+.game-grid-cell,
+.game-grid-cell-empty {
+  border: 1px solid var(--solarized-blue);
+  font-family: 'PT Mono', 'Courier New', Courier, monospace;
+  width: 1.5em;
+  height: 1.5em;
+  padding: 0;
+  line-height: 1;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Fade in opacity for game grid cells */
+.game-grid-cell {
+  transition: color 0.5s ease-in;
+}
+
+.game-grid-cell-empty {
+  color: var(--fixf-background);
+}
+
+.game-over-title {
+  color: var(--solarized-orange);
+  font-size: 3.5em;
+  font-weight: bolder;
+  padding: 1em;
+  text-align: center;
+}
+
+.game-over-score {
+  font-size: 2em;
+  font-weight: bold;
+  text-align: center;
+}
+
+.subtitle {
+  color: var(--solarized-base03);
+  font-size: 0.9em;
+}
+
+/* The shared back button, top-left, below the header row — matches the
+   Swift app's chevron.left back button shown on every screen but idle. */
+.back-button {
+  margin-left: 0;
+  margin-top: -0.25em;
+}
+
+.menu-container {
+  /* Align with the top-level heading (no side indent); extra space above.
+     align-items: flex-start keeps the toolbar/stat .card children sized to
+     their content (flex's default cross-axis stretch would otherwise widen
+     them to fill the column) — matches the Swift app's
+     VStack(alignment: .leading). */
+  margin: 1em 0 2em;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5em;
+}
+
+/* The history chart is the one .menu-container child that should still
+   stretch full-width (align-items: flex-start above only wants the toolbar
+   and stat cards to shrink to their content) — matches the Swift app's
+   HistoryChartView sitting full-width in the same leading-aligned VStack. */
+.history-container {
+  align-self: stretch;
+  width: 100%;
+}
+
+.description {
+  text-align: justify;
+}
+
+
+.chart {
+  max-width: 1332px;
+  overflow: visible;
+
+  .series.series {
+    stroke: var(--solarized-orange);
+    stroke-width: 2px;
+
+    text {
+      stroke: none;
+      stroke-width: 1px;
+    }
+  }
+
+  .series.bar-chart {
+    stroke-width: 30px;
+  }
+
+  /* 𝑛 = 0..MAX_N_BACK gridlines spanning the plot, with labels at the right
+     edge — matches the Swift app's AxisGridLine (borderTable) and
+     right-side AxisValueLabel (fgBrown), replacing the old left/bottom
+     axis spines. */
+  .grid-line {
+    stroke: var(--border-table);
+    stroke-width: 0.5px;
+  }
+
+  .grid-label {
+    fill: var(--fg-brown);
+    font-size: 6px;
+  }
+}
